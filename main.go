@@ -13,8 +13,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/benhoyt/goawk/interp"
-	"github.com/benhoyt/goawk/parser"
 	"github.com/benhoyt/goawk/lexer"
+	"github.com/benhoyt/goawk/parser"
 )
 
 const version = "1.0"
@@ -107,6 +107,17 @@ func main() {
 		Argv0: filepath.Base(os.Args[0]),
 		Args:  args,
 		Vars:  []string{"FS", *fieldSep},
+		Funcs: map[string]interface{}{
+			"sum": func(args ...float64) float64 {
+				sum := 0.0
+				for _, a := range args {
+					sum += a
+				}
+				return sum
+			},
+			"repeat":  strings.Repeat,
+			"isodate": func(arg int64) string { return time.UnixMilli(arg).Format(time.RFC3339) },
+		},
 	}
 	for _, v := range vars {
 		parts := strings.SplitN(v, "=", 2)
@@ -154,10 +165,11 @@ func main() {
 //
 // -----------------------------------------------------
 // BEGIN { x*; }
-//           ^
+//
+//	^
+//
 // -----------------------------------------------------
 // parse error at 1:11: expected expression instead of ;
-//
 func showSourceLine(src []byte, pos lexer.Position, dividerLen int) {
 	divider := strings.Repeat("-", dividerLen)
 	if divider != "" {
